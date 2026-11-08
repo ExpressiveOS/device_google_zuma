@@ -1,0 +1,14 @@
+# ViPER4Android RE's AIDL driver, /vendor/lib64/soundfx/libv4a_aidl.so (the ExpressiveOS kit's
+# viper4android folder, husky only). The audio HAL loads it from audio_effects_config.xml, and it
+# then publishes the binder service viper.control, which the ViPER4Android app (a privileged
+# system_ext app, so priv_app) uses for every setting and for the driver status.
+type viper_control_service, service_manager_type;
+
+allow hal_audio_default viper_control_service:service_manager add;
+
+# The app turns on its AIDL mode only when ServiceManager.listServices() names the effect
+# IFactory (ViPER4Android 2.1.1 ViperRepository.kt aidlMode); platform policy grants list to
+# untrusted apps but not to priv_app
+allow priv_app servicemanager:service_manager list;
+allow priv_app viper_control_service:service_manager find;
+binder_call(priv_app, hal_audio_default)

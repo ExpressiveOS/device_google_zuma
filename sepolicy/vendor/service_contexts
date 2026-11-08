@@ -49,3 +49,4 @@ vendor.google.radio_ext.IRadioExt/default u:object_r:hal_radio_ext_service:s0
 vendor.google.whitechapel.audio.extension.IAudioExtension/default u:object_r:hal_audio_ext_service:s0
 vendor.google.wireless_charger.IWirelessCharger/default u:object_r:hal_wireless_charger_service:s0
 vendor.google.wireless_charger.service.IWlcService/default u:object_r:hal_wlcservice_service:s0
+viper.control u:object_r:viper_control_service:s0

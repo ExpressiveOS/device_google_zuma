@@ -8,10 +8,6 @@
 include build/make/target/board/BoardConfigMainlineCommon.mk
 include build/make/target/board/BoardConfigPixelCommon.mk
 
-# Include settings for 16k developer option, if enabled
-ifneq ($(wildcard $(TARGET_KERNEL_DIR)/16kb/),)
-include device/google/zuma/BoardConfig-16k-common.mk
-endif
 
 TARGET_ARCH := arm64
 TARGET_ARCH_VARIANT := armv8-2a
@@ -47,7 +43,8 @@ BOARD_KERNEL_CMDLINE += \
     android_arch_task_struct_size=512
 
 TARGET_NO_BOOTLOADER := true
-BOARD_PREBUILT_BOOTIMAGE := $(wildcard $(TARGET_KERNEL_DIR)/boot.img)
+KERNEL_IMAGES_PATH ?= vendor/google/$(TARGET_BOOTLOADER_BOARD_NAME)-kernel-images
+BOARD_PREBUILT_BOOTIMAGE := $(KERNEL_IMAGES_PATH)/images/boot.img
 TARGET_NO_KERNEL := true
 BOARD_USES_GENERIC_KERNEL_IMAGE := true
 BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT := true
@@ -87,9 +84,7 @@ ifneq ($(PRODUCT_BUILD_VENDOR_BOOT_IMAGE),false)
 AB_OTA_PARTITIONS += vendor_boot
 AB_OTA_PARTITIONS += dtbo
 endif
-ifeq ($(PRODUCT_BUILD_VENDOR_KERNEL_BOOT_IMAGE),true)
 AB_OTA_PARTITIONS += vendor_kernel_boot
-endif
 ifneq ($(PRODUCT_BUILD_VBMETA_IMAGE),false)
 AB_OTA_PARTITIONS += vbmeta
 endif
@@ -166,9 +161,11 @@ TARGET_COPY_OUT_SYSTEM_EXT := system_ext
 # vendor.img
 BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
 
-# vendor_dlkm.img
+# vendor_dlkm.img (stock prebuilt ext4)
+BOARD_USES_VENDOR_DLKMIMAGE := true
 BOARD_VENDOR_DLKMIMAGE_FILE_SYSTEM_TYPE := ext4
 TARGET_COPY_OUT_VENDOR_DLKM := vendor_dlkm
+BOARD_PREBUILT_VENDOR_DLKMIMAGE := $(KERNEL_IMAGES_PATH)/images/vendor_dlkm.img
 
 # persist.img
 BOARD_PERSISTIMAGE_FILE_SYSTEM_TYPE := f2fs
@@ -189,17 +186,16 @@ BOARD_GOOGLE_DYNAMIC_PARTITIONS_PARTITION_LIST := \
 BOARD_SUPER_PARTITION_ERROR_LIMIT := 8006926336
 
 # Reserve space for gapps install
--include vendor/lineage/config/BoardConfigReservedSize.mk
+-include vendor/expressiveos/config/BoardConfigReservedSize.mk
 
-# Build a separate system_dlkm partition
+# Prebuilt system_dlkm.img (stock ext4)
 BOARD_USES_SYSTEM_DLKMIMAGE := true
 BOARD_SYSTEM_DLKMIMAGE_FILE_SYSTEM_TYPE := ext4
 TARGET_COPY_OUT_SYSTEM_DLKM := system_dlkm
+BOARD_PREBUILT_SYSTEM_DLKMIMAGE := $(KERNEL_IMAGES_PATH)/images/system_dlkm.img
 
-# Device Tree
-BOARD_INCLUDE_DTB_IN_BOOTIMG := true
-BOARD_PREBUILT_DTBIMAGE_DIR := $(TARGET_KERNEL_DIR)
-BOARD_PREBUILT_DTBOIMAGE := $(BOARD_PREBUILT_DTBIMAGE_DIR)/dtbo.img
+# Device Tree (DTB lives inside prebuilt vendor_kernel_boot.img)
+BOARD_PREBUILT_DTBOIMAGE := $(KERNEL_IMAGES_PATH)/images/dtbo.img
 
 BOARD_USES_METADATA_PARTITION := true
 
@@ -227,37 +223,7 @@ BOARD_VENDOR_KERNEL_BOOTIMAGE_PARTITION_SIZE := 0x04000000
 # Vendor ramdisk image for kernel development
 BOARD_BUILD_VENDOR_RAMDISK_IMAGE := true
 
-KERNEL_MODULE_DIR := $(TARGET_KERNEL_DIR)
-KERNEL_MODULES := $(wildcard $(KERNEL_MODULE_DIR)/*.ko)
-
-BOARD_SYSTEM_KERNEL_MODULES_BLOCKLIST_FILE := $(KERNEL_MODULE_DIR)/system_dlkm.modules.blocklist
-BOARD_VENDOR_KERNEL_MODULES_BLOCKLIST_FILE := $(KERNEL_MODULE_DIR)/vendor_dlkm.modules.blocklist
-
-# Prebuilt kernel modules that are *not* listed in vendor_kernel_boot.modules.load
-BOARD_PREBUILT_VENDOR_KERNEL_RAMDISK_KERNEL_MODULES = fips140.ko
-BOARD_VENDOR_KERNEL_RAMDISK_KERNEL_MODULES_LOAD_EXTRA = $(foreach k,$(BOARD_PREBUILT_VENDOR_KERNEL_RAMDISK_KERNEL_MODULES),$(if $(wildcard $(KERNEL_MODULE_DIR)/$(k)), $(k)))
-
-# Kernel modules that are listed in vendor_kernel_boot.modules.load
-BOARD_VENDOR_KERNEL_RAMDISK_KERNEL_MODULES_LOAD_FILE := $(strip $(shell cat $(KERNEL_MODULE_DIR)/vendor_kernel_boot.modules.load))
-ifndef BOARD_VENDOR_KERNEL_RAMDISK_KERNEL_MODULES_LOAD_FILE
-$(error vendor_kernel_boot.modules.load not found or empty)
-endif
-BOARD_VENDOR_KERNEL_RAMDISK_KERNEL_MODULES_LOAD := $(BOARD_VENDOR_KERNEL_RAMDISK_KERNEL_MODULES_LOAD_EXTRA)
-BOARD_VENDOR_KERNEL_RAMDISK_KERNEL_MODULES_LOAD += $(BOARD_VENDOR_KERNEL_RAMDISK_KERNEL_MODULES_LOAD_FILE)
-BOARD_VENDOR_KERNEL_RAMDISK_KERNEL_MODULES := $(addprefix $(KERNEL_MODULE_DIR)/, $(BOARD_VENDOR_KERNEL_RAMDISK_KERNEL_MODULES_LOAD_EXTRA))
-BOARD_VENDOR_KERNEL_RAMDISK_KERNEL_MODULES += $(addprefix $(KERNEL_MODULE_DIR)/, $(notdir $(BOARD_VENDOR_KERNEL_RAMDISK_KERNEL_MODULES_LOAD_FILE)))
-
-BOARD_VENDOR_KERNEL_MODULES_LOAD := $(strip $(shell cat $(KERNEL_MODULE_DIR)/vendor_dlkm.modules.load))
-ifndef BOARD_VENDOR_KERNEL_MODULES_LOAD
-$(error vendor_dlkm.modules.load not found or empty)
-endif
-BOARD_VENDOR_KERNEL_MODULES := $(addprefix $(KERNEL_MODULE_DIR)/, $(notdir $(BOARD_VENDOR_KERNEL_MODULES_LOAD)))
-
-BOARD_SYSTEM_KERNEL_MODULES_LOAD := $(strip $(shell cat $(KERNEL_MODULE_DIR)/system_dlkm.modules.load))
-ifndef BOARD_SYSTEM_KERNEL_MODULES_LOAD
-$(error system_dlkm.modules.load not found or empty)
-endif
-BOARD_SYSTEM_KERNEL_MODULES := $(addprefix $(KERNEL_MODULE_DIR)/, $(notdir $(BOARD_SYSTEM_KERNEL_MODULES_LOAD)))
+# Kernel modules ship in prebuilt vendor_kernel_boot, vendor_dlkm and system_dlkm images.
 
 # SEPolicy
 BOARD_VENDOR_SEPOLICY_DIRS += \

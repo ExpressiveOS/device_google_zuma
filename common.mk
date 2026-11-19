@@ -60,16 +60,8 @@ PRODUCT_PRODUCT_VNDK_VERSION := current
 PRODUCT_ENFORCE_PRODUCT_PARTITION_INTERFACE := true
 
 # Init files
-ifeq (true,$(filter $(TARGET_BOOTS_16K) $(PRODUCT_16K_DEVELOPER_OPTION),true))
-PRODUCT_COPY_FILES += \
-	device/google/zuma/conf/init.efs.16k.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.efs.rc \
-	device/google/$(TARGET_BOARD_PLATFORM)/conf/fstab.efs.from_data:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.efs.from_data \
-
-PRODUCT_PACKAGES += fsck.f2fs.vendor
-else
 PRODUCT_COPY_FILES += \
 	device/google/zuma/conf/init.efs.4k.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.efs.rc
-endif
 
 # Recovery files
 PRODUCT_COPY_FILES += \
@@ -85,9 +77,7 @@ PRODUCT_PACKAGES += \
 	fstab.zuma-fips \
 	fstab.zuma-fips.vendor_ramdisk
 
-# Insmod config files
-PRODUCT_COPY_FILES += \
-	$(call find-copy-subdir-files,init.insmod.*.cfg,$(TARGET_KERNEL_DIR),$(TARGET_COPY_OUT_VENDOR_DLKM)/etc)
+# Insmod config files live in prebuilt vendor_dlkm.img
 
 # For creating dtbo image
 PRODUCT_HOST_PACKAGES += \
@@ -246,8 +236,8 @@ PRODUCT_BUILD_PVMFW_IMAGE := true
 # Set the environment variable to enable the Secretkeeper HAL service.
 SECRETKEEPER_ENABLED := true
 
-# Enable to build standalone vendor_kernel_boot image.
-PRODUCT_BUILD_VENDOR_KERNEL_BOOT_IMAGE := true
+# vendor_kernel_boot.img is prebuilt (extract-kernel-images.sh)
+PRODUCT_BUILD_VENDOR_KERNEL_BOOT_IMAGE := false
 
 # Project
 include hardware/google/pixel/common/pixel-common-device.mk
@@ -300,12 +290,12 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES += \
     android.hardware.location.gps.prebuilt.xml
 
-# Lineage Health
-include hardware/google/pixel/lineage_health/device.mk
+# ExpressiveOS Health
+include hardware/google/pixel/eos_health/device.mk
 
-$(call soong_config_set_bool,lineage_health,charging_control_supports_deadline,true)
-$(call soong_config_set_bool,lineage_health,charging_control_supports_limit,true)
-$(call soong_config_set_bool,lineage_health,charging_control_supports_toggle,false)
+$(call soong_config_set_bool,eos_health,charging_control_supports_deadline,true)
+$(call soong_config_set_bool,eos_health,charging_control_supports_limit,true)
+$(call soong_config_set_bool,eos_health,charging_control_supports_toggle,false)
 
 # Linker config
 PRODUCT_VENDOR_LINKER_CONFIG_FRAGMENTS += \
@@ -353,14 +343,8 @@ PRODUCT_PACKAGES += \
     TelephonyProviderOverlayProductZuma
 
 PRODUCT_PACKAGES += \
-    FrameworkResOverlayLineageZuma \
-    LineageSdkOverlayZuma \
     SettingsOverlayZuma \
     SimpleDeviceConfigOverlayZuma
-
-# Parts
-PRODUCT_PACKAGES += \
-    GoogleParts
 
 # Properties
 TARGET_PRODUCT_PROP += device/google/zuma/product.prop
@@ -384,7 +368,7 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.telephony.carrierlock.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.carrierlock.xml
 
 # Touch
-include hardware/google/pixel/touch/device.mk
+include hardware/google/pixel/eos_touch/device.mk
 
 # VINTF
 DEVICE_MANIFEST_FILE += \

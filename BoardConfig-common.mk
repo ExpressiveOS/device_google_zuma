@@ -247,3 +247,6 @@ SYSTEM_EXT_PUBLIC_SEPOLICY_DIRS += \
 
 # Protected VM firmware
 BOARD_PVMFWIMAGE_PARTITION_SIZE := 0x00100000
+
+# Match CP3A vendor/product priv-app framework-res resource IDs
+$(call soong_config_set,grapheneos,framework_res_id_map,cp3a)

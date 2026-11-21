@@ -111,9 +111,6 @@ vendor.media.omx=0
 vendor.powerhal.apf_disabled=false
 vendor.powerhal.apf_enabled=true
 
-# Rescue party
-persist.device_config.configuration.disable_rescue_party=true
-
 # SoC
 ro.soc.manufacturer=Google
 ro.soc.model=Tensor G3

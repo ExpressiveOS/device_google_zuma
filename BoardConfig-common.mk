@@ -217,8 +217,10 @@ BOARD_INIT_BOOT_IMAGE_PARTITION_SIZE := 0x800000
 BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := 0x04000000
 BOARD_DTBOIMG_PARTITION_SIZE := 0x01000000
 
-# Build vendor kernel boot image
-BOARD_VENDOR_KERNEL_BOOTIMAGE_PARTITION_SIZE := 0x04000000
+# vendor_kernel_boot.img is prebuilt (vendor/google/<device>-kernel-images/radio/vendor_kernel_boot.img)
+# Do not define BOARD_VENDOR_KERNEL_BOOTIMAGE_PARTITION_SIZE here: AOSP board_config.mk has a
+# typo checking PRODUCT_BUILD_VENDOR_KERNEL instead of PRODUCT_BUILD_VENDOR_KERNEL_BOOT_IMAGE,
+# which otherwise forces BUILDING_VENDOR_KERNEL_BOOT_IMAGE=true and overwrites the prebuilt image.
 
 # Vendor ramdisk image for kernel development
 BOARD_BUILD_VENDOR_RAMDISK_IMAGE := true
